@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J Arya Shop</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:Poppins;background:#f8fafc;}
+
+header{
+background:#0f172a;color:white;padding:15px;text-align:center;
+}
+header h1{font-size:20px;}
+header p{font-size:13px;color:#cbd5e1;}
+
+.hero{
+height:180px;
+background:url('https://i.ibb.co/FvfnMZb/IMG-20260318-120421.jpg') center/cover;
+display:flex;align-items:center;justify-content:center;
+color:white;font-weight:600;
+}
+
+.filters{
+display:flex;gap:8px;padding:10px;overflow:auto;
+}
+.filters button{
+border:none;padding:8px 14px;border-radius:20px;background:#e2e8f0;
+}
+
+.products{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+gap:10px;padding:10px;
+}
+
+.card{
+background:white;border-radius:12px;padding:10px;
+box-shadow:0 2px 6px rgba(0,0,0,0.05);
+}
+
+.card img{width:100%;border-radius:8px;}
+
+.card h3{font-size:14px;margin:5px 0;}
+.card small{color:#64748b;}
+
+.price{font-weight:600;margin:5px 0;}
+
+.add{
+background:#22c55e;color:white;border:none;
+padding:8px;width:100%;border-radius:6px;
+}
+
+.cart-btn{
+position:fixed;bottom:20px;right:20px;
+background:#0f172a;color:white;
+padding:15px;border-radius:50%;
+font-size:18px;
+}
+
+.cart{
+position:fixed;bottom:0;left:0;right:0;
+background:white;
+max-height:80%;overflow:auto;
+display:none;padding:15px;
+border-radius:15px 15px 0 0;
+}
+
+.item{margin-bottom:10px;}
+
+.item-controls button{
+margin:0 3px;padding:3px 8px;
+}
+
+.total{font-weight:600;margin:10px 0;}
+
+form input,form textarea{
+width:100%;padding:8px;margin:5px 0;
+border:1px solid #ccc;border-radius:6px;
+}
+
+.place{
+background:#0f172a;color:white;
+padding:10px;border:none;width:100%;
+border-radius:6px;
+}
+
+.success{
+display:none;
+text-align:center;
+padding:15px;
+color:green;
+}
+
+.whatsapp{
+position:fixed;left:20px;bottom:20px;
+background:#25D366;color:white;
+padding:14px;border-radius:50%;
+font-size:18px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>J Arya Shop</h1>
+<p>One Blink Delivery • Mehrauli, Delhi</p>
+</header>
+
+<div class="hero">Fast Electronic Deals</div>
+
+<div class="filters">
+<button onclick="filter('all')">All</button>
+<button onclick="filter('keyboard')">Keyboard</button>
+<button onclick="filter('mouse')">Mouse</button>
+<button onclick="filter('monitor')">Monitor</button>
+<button onclick="filter('remote')">Remote</button>
+</div>
+
+<div class="products" id="products"></div>
+
+<div class="cart-btn" onclick="toggleCart()">🛒 <span id="count">0</span></div>
+
+<div class="cart" id="cart">
+<h3>Your Cart</h3>
+<div id="cartItems"></div>
+<div class="total">Total: ₹<span id="total">0</span></div>
+
+<form action="https://formspree.io/f/mqeywzjk" method="POST" onsubmit="prepareOrder()">
+<input name="name" placeholder="Name" required>
+<input name="phone" placeholder="Phone" required>
+<textarea name="address" placeholder="Address" required></textarea>
+<textarea name="notes" placeholder="Instructions"></textarea>
+
+<input type="hidden" name="order" id="orderData">
+
+<button class="place" type="submit">Place Order</button>
+</form>
+
+<div class="success" id="success">
+Order placed! J Arya will contact you on WhatsApp.
+<br><br>
+<a href="https://wa.me/917678408826">Chat Now</a>
+</div>
+
+</div>
+
+<a class="whatsapp" href="https://wa.me/917678408826">💬</a>
+
+<script>
+const products=[
+{n:"Gaming Keyboard",p:500,c:"keyboard",d:"Fast gaming keyboard",i:"https://i.ibb.co/hJFBxrHq/IMG-20260318-120424.jpg"},
+{n:"RGB Keyboard",p:800,c:"keyboard",d:"RGB backlit keyboard",i:"https://i.ibb.co/NgSg0hvJ/17738159483395573165019063143046.jpg"},
+{n:"Office Keyboard",p:400,c:"keyboard",d:"Comfort typing keyboard",i:"https://i.ibb.co/FvfnMZb/IMG-20260318-120421.jpg"},
+{n:"Wireless Mouse",p:300,c:"mouse",d:"Smooth wireless mouse",i:"https://i.ibb.co/5h0JJpjW/IMG-20260318-120428.jpg"},
+{n:"Gaming Mouse",p:600,c:"mouse",d:"High DPI gaming mouse",i:"https://i.ibb.co/FvfnMZb/IMG-20260318-120421.jpg"},
+{n:"HD Monitor",p:4500,c:"monitor",d:"Clear HD display",i:"https://i.ibb.co/hJFBxrHq/IMG-20260318-120424.jpg"},
+{n:"LED Monitor",p:5500,c:"monitor",d:"Bright LED screen",i:"https://i.ibb.co/NgSg0hvJ/17738159483395573165019063143046.jpg"},
+{n:"TV Remote",p:200,c:"remote",d:"Universal TV remote",i:"https://i.ibb.co/FvfnMZb/IMG-20260318-120421.jpg"},
+{n:"AC Remote",p:350,c:"remote",d:"AC compatible remote",i:"https://i.ibb.co/5h0JJpjW/IMG-20260318-120428.jpg"}
+];
+
+let cart=JSON.parse(localStorage.getItem("cart"))||[];
+
+function render(){
+let html="";
+products.forEach((p,i)=>{
+html+=`
+<div class="card" data-cat="${p.c}">
+<img src="${p.i}" loading="lazy" alt="${p.n}">
+<h3>${p.n}</h3>
+<small>${p.d}</small>
+<div class="price">₹${p.p}</div>
+<button class="add" onclick="add(${i})">Add to Cart</button>
+</div>`;
+});
+productsDiv.innerHTML=html;
+updateCart();
+}
+
+function filter(cat){
+document.querySelectorAll(".card").forEach(c=>{
+c.style.display=(cat==="all"||c.dataset.cat===cat)?"block":"none";
+});
+}
+
+function add(i){
+let item=cart.find(x=>x.n===products[i].n);
+if(item){item.q++}else{cart.push({...products[i],q:1})}
+updateCart();
+}
+
+function updateCart(){
+localStorage.setItem("cart",JSON.stringify(cart));
+count.innerText=cart.reduce((a,b)=>a+b.q,0);
+
+let html="",total=0;
+cart.forEach((i,index)=>{
+let sub=i.p*i.q;
+total+=sub;
+html+=`
+<div class="item">
+<b>${i.n}</b><br>
+₹${i.p} x ${i.q} = ₹${sub}
+<div class="item-controls">
+<button onclick="cart[${index}].q++;updateCart()">+</button>
+<button onclick="cart[${index}].q--;if(cart[${index}].q<=0)cart.splice(${index},1);updateCart()">-</button>
+<button onclick="cart.splice(${index},1);updateCart()">Remove</button>
+</div>
+</div>`;
+});
+cartItems.innerHTML=html;
+totalEl.innerText=total;
+}
+
+function toggleCart(){
+cartBox.style.display=cartBox.style.display==="block"?"none":"block";
+}
+
+function prepareOrder(){
+let text="";
+cart.forEach(i=>{
+text+=`${i.n} x${i.q} = ₹${i.p*i.q}\n`;
+});
+text+="Total: ₹"+totalEl.innerText;
+
+orderData.value=text;
+
+setTimeout(()=>{
+cart=[];
+localStorage.removeItem("cart");
+updateCart();
+success.style.display="block";
+},500);
+}
+
+const productsDiv=document.getElementById("products");
+const cartItems=document.getElementById("cartItems");
+const totalEl=document.getElementById("total");
+const count=document.getElementById("count");
+const cartBox=document.getElementById("cart");
+const orderData=document.getElementById("orderData");
+const success=document.getElementById("success");
+
+render();
+</script>
+
+</body>
+</html>
